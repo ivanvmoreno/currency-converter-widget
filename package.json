@@ -1,0 +1,22 @@
+{
+  "name": "currency-converter-widget",
+  "version": "1.0.0",
+  "description": "A Custom Element for currency conversion",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ivanvmoreno/currency-converter-widget.git"
+  },
+  "author": "Iván Moreno",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ivanvmoreno/currency-converter-widget/issues"
+  },
+  "homepage": "https://github.com/ivanvmoreno/currency-converter-widget#readme",
+  "dependencies": {
+    "lit-element": "^2.2.1"
+  }
+}
