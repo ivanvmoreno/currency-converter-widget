@@ -1,10 +1,13 @@
 {
   "name": "currency-converter-widget",
   "version": "1.0.0",
-  "description": "A Custom Element for currency conversion",
+  "description": "A LitElement component for currency conversion",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "npm run serve | npm run watch",
+    "serve": "polymer serve --port 8080",
+    "test": "polymer test",
+    "watch": "browser-sync start --proxy localhost:8080 --open --files \"**/*.html\""
   },
   "repository": {
     "type": "git",
@@ -17,6 +20,10 @@
   },
   "homepage": "https://github.com/ivanvmoreno/currency-converter-widget#readme",
   "dependencies": {
+    "@webcomponents/custom-elements": "^1.2.4",
     "lit-element": "^2.2.1"
+  },
+  "devDependencies": {
+    "browser-sync": "^2.26.7"
   }
 }
