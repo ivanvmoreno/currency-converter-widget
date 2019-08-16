@@ -1,12 +1,9 @@
 import { LitElement, html, css } from 'lit-element';
 
 const ELEMENTS = {
-    FORM: 'form',
-    AMOUNT_INPUT: 'amount',
-    FROM_INPUT: 'from',
-    TO_INPUT: 'to',
+    FROM_SELECT: 'from',
+    TO_SELECT: 'to',
 };
-
 class CurrencyConverter extends LitElement {
     static get is() {
         return 'currency-converter';
@@ -114,56 +111,70 @@ class CurrencyConverter extends LitElement {
         return {
             rates: Object,
             currencies: Array,
-            result: Number
+            amount: Number,
+            from: String, 
+            to: String, 
+            result: {
+                type: Number,
+                attribute: false
+            }
         };
     }
 
-    async connectedCallback() {
-        super.connectedCallback();
-        const { rates, base } = await fetch('https://api.exchangeratesapi.io/latest').then(res => res.json());
-        this.rates = {
-            [base]: 1,
-            ...rates,
-        };
-        this.currencies = [base, ...Object.keys(rates)];
+    constructor() {
+        super();
+        this.rates = {};
+        this.currencies = [];
+        this.amount = 1;
     }
 
-    onFormSubmit(event) {
-        event.preventDefault();
-        const amount = parseFloat(this.shadowRoot.getElementById(ELEMENTS.AMOUNT_INPUT).value);
-        const from = this.shadowRoot.getElementById(ELEMENTS.FROM_INPUT).value;
-        const to = this.shadowRoot.getElementById(ELEMENTS.TO_INPUT).value;
-        this.result = this.convertCurrency(amount, from, to);
-    }
-
-    convertCurrency(amount, from, to) {
+    convertCurrency(amount = this.amount, from = this.from, to = this.to) {
         const { [from]: fromRate, [to]: toRate} = this.rates;
         return ((amount / fromRate) * toRate).toFixed(5);
     }
 
     swapCurrencies() {
-        const fromInput = this.shadowRoot.getElementById(ELEMENTS.FROM_INPUT);
-        const toInput = this.shadowRoot.getElementById(ELEMENTS.TO_INPUT);
-        [fromInput.value, toInput.value] = [toInput.value, fromInput.value];
+        [this.from, this.to] = [this.to, this.from];
+        this.result = this.convertCurrency();
+    }
+
+    onAmountChange(event) {
+        this.amount = event.target.value;
+        this.result = this.convertCurrency();
+    }
+
+    onFromChange(event) {
+        this.from = event.target.value;
+        this.result = this.convertCurrency();
+    }
+
+    onToChange(event) {
+        this.to = event.target.value;
+        this.result = this.convertCurrency();
+    }
+
+    onFormSubmit(event) {
+        event.preventDefault();
+        this.result = this.convertCurrency();
     }
 
     renderForm() {
         const currenciesOptions = this.currencies.map(curr => html`<option value=${curr}>${curr}</option>`);
         return html`
-            <form id="form" class="form" @submit=${this.onFormSubmit}>
+            <form class="form" @submit=${this.onFormSubmit}>
                 <div class="input">
                     <label class="input__label">Amount</label>
-                    <input id=${ELEMENTS.AMOUNT_INPUT} class="input__field" type="number" min=".01" step=".01" value="1">
+                    <input class="input__field" type="number" min=".01" step=".01" placeholder="Amount to convert..." .value=${this.amount} @input=${this.onAmountChange}>
                 </div>
                 <div class="input">
                     <label class="input__label">From</label>
-                    <select id=${ELEMENTS.FROM_INPUT} class="input__field input__field--select">
+                    <select id=${ELEMENTS.FROM_SELECT} class="input__field input__field--select" .value=${this.from} @change=${this.onFromChange}>
                         ${currenciesOptions}
                     </select>
                 </div>
                 <div class="input">
                     <label class="input__label">To</label>
-                    <select id=${ELEMENTS.TO_INPUT} class="input__field input__field--select">
+                    <select id=${ELEMENTS.TO_SELECT} class="input__field input__field--select" .value=${this.to} @change=${this.onToChange}>
                         ${currenciesOptions}
                     </select>
                 </div>
@@ -178,16 +189,13 @@ class CurrencyConverter extends LitElement {
     }
 
     renderResult() {
-        const amount = this.shadowRoot.getElementById(ELEMENTS.AMOUNT_INPUT).value;
-        const from = this.shadowRoot.getElementById(ELEMENTS.FROM_INPUT).value;
-        const to = this.shadowRoot.getElementById(ELEMENTS.TO_INPUT).value;
         return html`
             <div class="result">
-                <div class="result__from">${amount} ${from} =</div>
-                <div class="result__to">${this.result} <span>${to}</span></div>
+                <div class="result__from">${this.amount} ${this.from} =</div>
+                <div class="result__to">${this.result} <span>${this.to}</span></div>
                 <div class="rates">
-                    <div class="rates__rate">1 ${to} = ${this.convertCurrency(1, to, from)} ${from}</div>
-                    <div class="rates__rate">1 ${from} = ${this.convertCurrency(1, from, to)} ${to}</div>
+                    <div class="rates__rate">1 ${this.to} = ${this.convertCurrency(1, this.to, this.from)} ${this.from}</div>
+                    <div class="rates__rate">1 ${this.from} = ${this.convertCurrency(1, this.from, this.to)} ${this.to}</div>
                 </div>
             </div>
         `;
@@ -197,10 +205,22 @@ class CurrencyConverter extends LitElement {
         return html`
             <div class="container">
                 ${ this.renderForm() }
-                ${ this.result &&
+                ${ this.result && this.amount &&
                     this.renderResult() }
             </div>
         `;
+    }
+
+    updated(changedProperties) {
+        if ([...changedProperties.keys()].includes('currencies')) {
+            if (!this.from) {
+                this.from = this.currencies[0];
+                this.to = this.currencies[1];
+            } else {
+                this.shadowRoot.getElementById(ELEMENTS.FROM_SELECT).value = this.from;
+                this.shadowRoot.getElementById(ELEMENTS.TO_SELECT).value = this.to;
+            }
+        }
     }
 }
 
