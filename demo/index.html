@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+    <title>currency-converter-widget demo</title>
+
+    <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
+
+    <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+    <link rel="import" href="../currency-converter-widget.html">
+
+    <custom-style>
+      <style is="custom-style" include="demo-pages-shared-styles">
+          .vertical-section-container {
+            max-width: initial;
+          }
+      </style>
+    </custom-style>
+  </head>
+  <body>
+    <div class="vertical-section-container centered">
+      <h3>Basic currency-converter-widget demo</h3>
+      <demo-snippet>
+        <template>
+          <currency-converter-widget from="DKK" to="EUR"></currency-converter-widget>
+        </template>
+      </demo-snippet>
+    </div>
+    <script>
+      document.addEventListener('WebComponentsReady', async () => {
+        const widget = document.querySelector('demo-snippet > currency-converter-widget');
+        const { rates, base } = await fetch('https://api.exchangeratesapi.io/latest').then(res => res.json());
+        widget.rates = {
+            [base]: 1,
+            ...rates,
+        };
+        widget.currencies = [base, ...Object.keys(rates)];
+        widget.amount = 1800;
+      });
+    </script>
+  </body>
+</html>

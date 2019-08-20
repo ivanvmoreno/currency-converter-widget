@@ -1,0 +1,244 @@
+<link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../polymer/lib/utils/render-status.html">
+
+<dom-module id="currency-converter-widget">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+
+      :host[hidden] {
+        display: none;
+      }
+
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1.5rem;
+        background: var(--currency-converter-widget-background, linear-gradient(to right,#073590,#0D49C0));
+        font-family: var(--currency-converter-widget-font-family, Arial);
+        color: var(--currency-converter-widget-color, #FFF);
+        border-radius: var(--currency-converter-widget-input-field-border-radius, 5px);
+      }
+
+      .form {
+        display: flex;
+        flex-wrap: wrap;
+      }
+
+      .input {
+        display: flex;
+        flex-direction: column;
+        padding: 0 .5rem;
+      }
+
+      .input__label {
+        padding-bottom: .5rem;
+      }
+
+      /* reset input browser styles */
+      .input__field {
+        border:none;
+        background-image: none;
+        background-color: transparent;
+        -webkit-box-shadow: none;
+        -moz-box-shadow: none;
+        box-shadow: none;
+      }
+
+      .input__field {
+          height: 3rem;
+          font-size: 2rem;
+          padding: 0 .75rem;
+          background: var(--currency-converter-widget-input-field-background, #FFF);
+          color: var(--currency-converter-widget-input-field-color, #073590);
+          border-radius: var(--currency-converter-widget-input-field-border-radius, 5px);
+      }
+      
+      .input__field--swap, .input__field--submit {
+        margin-top: auto;
+        padding: 0 2rem;
+        font-size: 1.5rem;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      .input__field--swap {
+        background: var(--currency-converter-widget-input-field-swap-background, #fcb813);
+      }
+
+      .input__field--submit {
+        background: var(--currency-converter-widget-input-field-submit-background, #fcb813);
+      }
+
+      .result {
+        text-align: center;
+        margin-top: .5rem;
+      }
+
+      .result__from {
+        font-size: 1.5rem;
+      }
+
+      .result__to {
+        font-size: 3rem;
+      }
+
+      .result__to span {
+        font-size: 1.5rem;
+      }
+
+      .rates {
+        font-weight: bold;
+      }
+
+      .rates > div:not(:last-child) {
+        margin: .5rem 0;
+      }
+    </style>
+    <div class="container">
+      <form class="form" on-submit="onFormSubmit">
+        <div class="input">
+            <label class="input__label">Amount</label>
+            <input 
+              class="input__field" 
+              type="number" 
+              min=".01" 
+              step=".01" 
+              placeholder="Amount to convert..." 
+              value$="[[amount]]" 
+              on-input="onAmountChange">
+        </div>
+        <div class="input">
+            <label class="input__label">From</label>
+            <select 
+              id="from" 
+              class="input__field input__field--select" 
+              value$="{{from}}" 
+              on-change="onFromChange">
+              <template is="dom-repeat" items="[[currencies]]" as="curr">
+                <option value="[[curr]]">[[curr]]</option>
+              </template>
+            </select>
+        </div>
+        <div class="input">
+            <label class="input__label">To</label>
+            <select 
+              id="to" 
+              class="input__field input__field--select" 
+              value$="{{to}}" 
+              on-change="onToChange">
+              <template is="dom-repeat" items="[[currencies]]" as="curr">
+                <option value="[[curr]]">[[curr]]</option>
+              </template>
+            </select>
+        </div>
+        <div class="input input--swap" on-click="swapCurrencies">
+            <input class="input__field input__field--submit" type="button" value="Swap">
+        </div>
+        <div class="input">
+            <input class="input__field input__field--submit" type="submit" value="Convert">
+        </div>
+      </form>
+      <template is="dom-if" if="[[shouldRenderResult(result, amount)]]">
+        <div class="result">
+          <div class="result__from">[[amount]] [[from]] =</div>
+          <div class="result__to">[[result]] <span>[[to]]</span></div>
+          <div class="rates">
+              <div class="rates__rate">1 [[to]] = [[convertCurrency(1, to, from)]] [[from]]</div>
+              <div class="rates__rate">1 [[from]] = [[convertCurrency(1, from, to)]] [[to]]</div>
+          </div>
+        </div>
+      </template>
+    </div>
+  </template>
+
+  <script>
+    const ELEMENTS = {
+      FROM_SELECT: 'from',
+      TO_SELECT: 'to',
+    };
+
+    class CurrencyConverterWidget extends Polymer.Element {
+      static get is() { 
+        return 'currency-converter-widget'; 
+      }
+
+      static get properties() {
+        return {
+          rates: {
+            type: Object,
+            value: {},
+          },
+          currencies: {
+            type: Array,
+            value: [],
+            observer: 'currenciesObserver'
+          },
+          amount: {
+            type: Number, 
+            value: 1,
+          },
+          from: String, 
+          to: String, 
+          result: {
+              type: Number,
+              reflectToAttribute: false
+          }
+        };
+      }
+
+      convertCurrency(amount = this.amount, from = this.from, to = this.to) {
+        const { [from]: fromRate, [to]: toRate} = this.rates;
+        return ((amount / fromRate) * toRate).toFixed(5);
+      }
+
+      swapCurrencies() {
+        [this.from, this.to] = [this.to, this.from];
+        this.result = this.convertCurrency();
+      }
+
+      currenciesObserver(oldVal, newVal) {
+        Polymer.RenderStatus.afterNextRender(this, () => {
+          const fromSelect = this.shadowRoot.getElementById(ELEMENTS.FROM_SELECT);
+          const toSelect = this.shadowRoot.getElementById(ELEMENTS.TO_SELECT);
+          if (Array.isArray(newVal) && !this.from) {
+            this.from = newVal[0];
+            this.to = newVal[1];
+          } else if (!!(fromSelect && toSelect)) {
+            fromSelect.value = this.from;
+            toSelect.value = this.to;
+          }
+        });
+      }
+
+      shouldRenderResult(result, amount) {
+        return (result && amount > 0) == true;
+      }
+
+      onAmountChange(event) {
+        this.amount = event.target.value;
+        this.result = this.convertCurrency();
+      }
+
+      onFromChange(event) {
+        this.from = event.target.value;
+        this.result = this.convertCurrency();
+      }
+
+      onToChange(event) {
+        this.to = event.target.value;
+        this.result = this.convertCurrency();
+      }
+
+      onFormSubmit(event) {
+        event.preventDefault();
+        this.result = this.convertCurrency();
+      }
+    }
+
+    window.customElements.define(CurrencyConverterWidget.is, CurrencyConverterWidget);
+  </script>
+</dom-module>

@@ -1,0 +1,36 @@
+<link rel="import" href="../polymer/polymer-element.html">
+
+<dom-module id="currency-converter-widget">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    <h2>Hello [[prop1]]!</h2>
+  </template>
+
+  <script>
+    /**
+     * `currency-converter-widget`
+     * A Polymer 2 component for currency conversion
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class CurrencyConverterWidget extends Polymer.Element {
+      static get is() { return 'currency-converter-widget'; }
+      static get properties() {
+        return {
+          prop1: {
+            type: String,
+            value: 'currency-converter-widget'
+          }
+        };
+      }
+    }
+
+    window.customElements.define(CurrencyConverterWidget.is, CurrencyConverterWidget);
+  </script>
+</dom-module>
