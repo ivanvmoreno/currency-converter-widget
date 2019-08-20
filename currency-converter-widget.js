@@ -138,18 +138,18 @@ class CurrencyConverter extends LitElement {
         this.result = this.convertCurrency();
     }
 
-    onAmountChange(event) {
-        this.amount = event.target.value;
+    onAmountChange({ target: { value } }) {
+        this.amount = value;
         this.result = this.convertCurrency();
     }
 
-    onFromChange(event) {
-        this.from = event.target.value;
+    onFromChange({ target: { value } }) {
+        this.from = value;
         this.result = this.convertCurrency();
     }
 
-    onToChange(event) {
-        this.to = event.target.value;
+    onToChange({ target: { value } }) {
+        this.to = value;
         this.result = this.convertCurrency();
     }
 
